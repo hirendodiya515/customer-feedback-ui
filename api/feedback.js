@@ -1,5 +1,6 @@
 // Vercel serverless function — writes customer feedback directly to NeonDB
-const { Pool } = require('pg');
+import pkg from 'pg';
+const { Pool } = pkg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -43,7 +44,7 @@ async function ensureTables(client) {
   `);
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Allow CORS from any origin (Vercel frontend)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -117,8 +118,8 @@ module.exports = async (req, res) => {
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error saving feedback:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   } finally {
     client.release();
   }
-};
+}
