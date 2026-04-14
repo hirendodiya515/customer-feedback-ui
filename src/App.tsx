@@ -1,67 +1,207 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { 
+  Star, 
+  Mail, 
+  User, 
+  MapPin, 
+  Info, 
+  CheckCircle2, 
+  ArrowRight,
+  ClipboardList,
+  Trophy,
+  Activity} from 'lucide-react';
 
-const categories = [
-  { id: 'qualityRating', label: '1️⃣ Quality of Solar Glass supplied' },
-  { id: 'deliveryRating', label: '2️⃣ On-time delivery performance' },
-  { id: 'packagingRating', label: '3️⃣ Packaging quality and protection' },
-  { id: 'supportRating', label: '4️⃣ Technical support provided' },
-  { id: 'responseRating', label: '5️⃣ Responsiveness of sales/support team' },
-  { id: 'complaintRating', label: '6️⃣ Complaint handling effectiveness' },
-  { id: 'documentationRating', label: '7️⃣ Accuracy of delivery documents' },
-];
+// --- Sub-components ---
 
-function App() {
+const RatingWithComment = ({ 
+  label, 
+  value, 
+  comment, 
+  onRatingChange, 
+  onCommentChange 
+}: { 
+  label: string; 
+  value: number; 
+  comment: string; 
+  onRatingChange: (val: number) => void; 
+  onCommentChange: (val: string) => void;
+}) => {
+  return (
+    <div className="space-y-2 p-3 rounded-lg transition-all hover:bg-slate-50 border border-transparent hover:border-slate-100">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <span className="text-slate-700 font-semibold text-sm">{label}</span>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => onRatingChange(star)}
+              className={`transition-all duration-200 transform hover:scale-110 focus:outline-none ${
+                value >= star ? 'text-amber-400' : 'text-slate-200'
+              }`}
+            >
+              <Star className="w-6 h-6 fill-current" />
+            </button>
+          ))}
+        </div>
+      </div>
+      <textarea
+        placeholder="Specific feedback (optional)..."
+        className="w-full text-xs p-2 bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none resize-none h-14"
+        value={comment}
+        onChange={(e) => onCommentChange(e.target.value)}
+      />
+    </div>
+  );
+};
+
+const SectionHeader = ({ icon: Icon, title, subtitle }: { icon: any, title: string, subtitle?: string }) => (
+  <div className="mb-6 border-b border-slate-100 pb-3">
+    <div className="flex items-center gap-2 text-blue-800">
+      <div className="p-1.5 bg-blue-50 rounded">
+        <Icon className="w-5 h-5" />
+      </div>
+      <h2 className="text-lg font-bold uppercase tracking-tight">{title}</h2>
+    </div>
+    {subtitle && <p className="text-slate-500 text-xs mt-0.5 ml-9">{subtitle}</p>}
+  </div>
+);
+
+// --- Main App ---
+
+export default function App() {
   const [formData, setFormData] = useState({
-    companyName: '',
-    contactPerson: '',
-    email: '',
-    product: '',
-    qualityRating: 0,
-    deliveryRating: 0,
-    packagingRating: 0,
-    supportRating: 0,
-    responseRating: 0,
-    complaintRating: 0,
-    documentationRating: 0,
-    overallRating: 0,
-    recommendation: '',
-    suggestion: '',
+    basicInfo: {
+      customerName: '',
+      plantLocation: '',
+      officeLocation: '',
+      annualCapacity: '',
+      representativeName: '',
+      representativeMail: '',
+      representativeDesignation: ''
+    },
+    quality: {
+      dimensionIssues: { rating: 0, comment: '' },
+      surfaceVisualDefects: { rating: 0, comment: '' },
+      reverseGlass: { rating: 0, comment: '' },
+      breakages: { rating: 0, comment: '' },
+      edgeGrindingChipping: { rating: 0, comment: '' },
+      glassThickness: { rating: 0, comment: '' },
+      arCoatingAppearance: { rating: 0, comment: '' },
+      packingLoadingQuality: { rating: 0, comment: '' },
+    },
+    competitiveness: {
+      pricing: { rating: 0, comment: '' },
+      deliveryLeadTime: { rating: 0, comment: '' },
+      salesServiceResponse: { rating: 0, comment: '' },
+      salesTeamApproach: { rating: 0, comment: '' }
+    },
+    others: {
+      procuredOtherThanBorosil: '', // 'Yes' or 'No'
+      procurementReason: '',
+      expectations: '',
+      preferredChoice: [] as string[],
+      recommendation: ''
+    },
+    overallSatisfaction: '',
+    suggestion: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleRatingChange = (category: string, value: number) => {
-    setFormData((prev) => ({ ...prev, [category]: value }));
+  // Calculate Average Quality Score
+  const averageQualityScore = useMemo(() => {
+    const values = Object.values(formData.quality).map(v => v.rating);
+    const sum = values.reduce((acc, curr) => acc + curr, 0);
+    const count = values.filter(v => v > 0).length;
+    return count > 0 ? (sum / count).toFixed(1) : '0.0';
+  }, [formData.quality]);
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const handleOverallChange = (value: number) => {
-    setFormData((prev) => ({ ...prev, overallRating: value }));
+  const updateBasicInfo = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      basicInfo: { ...prev.basicInfo, [field]: value }
+    }));
+  };
+
+  const updateQuality = (field: string, type: 'rating' | 'comment', value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      quality: {
+        ...prev.quality,
+        [field]: { ...(prev.quality as any)[field], [type]: value }
+      }
+    }));
+  };
+
+  const updateCompetitiveness = (field: string, type: 'rating' | 'comment', value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      competitiveness: {
+        ...prev.competitiveness,
+        [field]: { ...(prev.competitiveness as any)[field], [type]: value }
+      }
+    }));
+  };
+
+  const togglePreferredChoice = (choice: string) => {
+    setFormData(prev => {
+      const current = prev.others.preferredChoice;
+      const updated = current.includes(choice)
+        ? current.filter(item => item !== choice)
+        : [...current, choice];
+      return { ...prev, others: { ...prev.others, preferredChoice: updated } };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Simple validation
+    const newErrors: Record<string, string> = {};
+    if (!formData.basicInfo.customerName) newErrors.customerName = 'Required';
+    if (!formData.basicInfo.representativeMail || !validateEmail(formData.basicInfo.representativeMail)) {
+      newErrors.representativeMail = 'Valid email required';
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
-      // In production (Vercel), /api/feedback is handled by the serverless function.
-      // In local dev, set VITE_DEV_API_URL=http://localhost:3000 to test via NestJS.
-      const apiBase = import.meta.env.VITE_DEV_API_URL;
-      const url = apiBase ? `${apiBase}/customer-feedback` : '/api/feedback';
+      const payload = {
+        ...formData,
+        qualityAverage: averageQualityScore,
+        submittedAt: new Date().toISOString()
+      };
+
+      // Target the main DMS backend by default if in dev, else fallback to serverless
+      const apiBase = import.meta.env.VITE_DEV_API_URL || 'http://localhost:3000';
+      const url = `${apiBase}/customer-feedback`;
       
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       
       if (res.ok) {
         setSubmitted(true);
       } else {
-        alert('Failed to submit. Please try again.');
+        alert('Failed to submit. Please try again or contact support.');
       }
     } catch (error) {
-      alert('An error occurred while submitting.');
+      alert('An connectivity error occurred.');
     } finally {
       setIsSubmitting(false);
     }
@@ -69,156 +209,416 @@ function App() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg text-center space-y-6">
-          <div className="text-6xl text-center flex justify-center w-full">🎉</div>
-          <h2 className="text-2xl font-bold text-gray-900">Thank You !</h2>
-          <p className="text-gray-600">Your valuable feedback will help us serve you better. We appreciate your time.</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="bg-white p-8 rounded-2xl shadow-md max-w-lg w-full text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="bg-green-100 p-4 rounded-full">
+              <CheckCircle2 className="w-12 h-12 text-green-600" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">Thank You!</h1>
+          <p className="text-slate-600 text-sm leading-relaxed">
+            Your feedback has been successfully recorded. We value your partnership with <strong>Borosil Renewables Ltd.</strong>
+          </p>
+          <div className="h-px bg-slate-100 w-full my-4"></div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="text-blue-600 font-semibold hover:text-blue-700 underline underline-offset-4 text-sm"
+          >
+            Submit another response
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="bg-blue-800 text-white py-6 px-8 text-center">
-          <h1 className="text-2xl font-bold">Customer Feedback Form</h1>
-          <p className="mt-2 text-blue-100">Help us improve by rating your experience (takes &lt;30 seconds)</p>
+    <div className="min-h-screen bg-[#f8fafc] pb-8">
+      {/* Refined Header: L-C-R Alignment */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm transition-all duration-300 backdrop-blur-md bg-white/95">
+        <div className="max-w-7xl mx-auto px-6 py-5 grid grid-cols-3 items-center">
+          {/* Left: Logo */}
+          <div className="flex justify-start">
+            <img src="/logo.png" alt="Borosil Logo" className="h-10 md:h-12 w-auto object-contain" />
+          </div>
+          
+          {/* Center: Survey Title */}
+          <div className="flex justify-center text-center">
+            <h1 className="text-blue-900 font-extrabold text-base md:text-lg uppercase tracking-wider whitespace-nowrap">
+              Customer Satisfaction Survey
+            </h1>
+          </div>
         </div>
+      </header>
 
-        <form onSubmit={handleSubmit} className="px-8 py-8 space-y-8">
-          {/* Customer Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Company Name *</label>
-              <input required type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border" 
-                value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Contact Person *</label>
-              <input required type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border" 
-                value={formData.contactPerson} onChange={e => setFormData({...formData, contactPerson: e.target.value})} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email *</label>
-              <input required type="email" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border" 
-                value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Product Supplied</label>
-              <input type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border" 
-                value={formData.product} onChange={e => setFormData({...formData, product: e.target.value})} placeholder="e.g. Borosil Solar Glass" />
-            </div>
+      <main className="max-w-4xl mx-auto px-4 pt-8">
+        <div className="bg-white rounded-2xl shadow shadow-slate-200/50 overflow-hidden border border-slate-100">
+          <div className="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 md:p-8 text-white">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Voice Matters!</h1>
+            <p className="text-blue-100 text-sm max-w-xl opacity-90">
+              Help us refine our processes and products. Your honest feedback is instrumental in our journey toward excellence.
+            </p>
           </div>
 
-          <hr className="border-t border-gray-200" />
-
-          {/* Ratings (Stars) */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Service Rating (1 = Poor, 5 = Excellent)</h3>
-            {categories.map((cat) => (
-              <div key={cat.id} className="flex flex-col sm:flex-row sm:items-center justify-between group">
-                <span className="text-gray-700 font-medium mb-2 sm:mb-0">{cat.label}</span>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => handleRatingChange(cat.id, star)}
-                      className={`text-3xl transition-transform hover:scale-110 ${
-                        (formData as any)[cat.id] >= star ? '' : 'grayscale opacity-30'
-                      }`}
-                    >
-                      ⭐
-                    </button>
-                  ))}
+          <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-12">
+            
+            {/* Section 1: Basic Info */}
+            <section>
+              <SectionHeader icon={User} title="Basic Information" subtitle="Tell us about yourself and your organization" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 ml-1">Customer Name *</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      required
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.customerName ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
+                      placeholder="Organization Name"
+                      value={formData.basicInfo.customerName}
+                      onChange={(e) => updateBasicInfo('customerName', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 ml-1">Plant Location</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="City/State"
+                      value={formData.basicInfo.plantLocation}
+                      onChange={(e) => updateBasicInfo('plantLocation', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 ml-1">Office Location</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="Headquarters"
+                      value={formData.basicInfo.officeLocation}
+                      onChange={(e) => updateBasicInfo('officeLocation', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 ml-1">Annual Capacity</label>
+                  <div className="relative">
+                    <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="e.g. 100MW"
+                      value={formData.basicInfo.annualCapacity}
+                      onChange={(e) => updateBasicInfo('annualCapacity', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 ml-1">Representative Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="Contact Person"
+                      value={formData.basicInfo.representativeName}
+                      onChange={(e) => updateBasicInfo('representativeName', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 ml-1">Representative Mail *</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      required
+                      type="email"
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.representativeMail ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
+                      placeholder="email@example.com"
+                      value={formData.basicInfo.representativeMail}
+                      onChange={(e) => updateBasicInfo('representativeMail', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-xs font-bold text-slate-700 ml-1">Representative Designation</label>
+                  <div className="relative">
+                    <Info className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="Position in company"
+                      value={formData.basicInfo.representativeDesignation}
+                      onChange={(e) => updateBasicInfo('representativeDesignation', e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </section>
 
-          <hr className="border-t border-gray-200" />
+            {/* Section 2: Quality */}
+            <section>
+              <SectionHeader icon={Trophy} title="Quality Assurance" subtitle="Rate our product quality and physical characteristics" />
+              <div className="space-y-2">
+                <RatingWithComment 
+                  label="Dimension Issues Observed"
+                  value={formData.quality.dimensionIssues.rating}
+                  comment={formData.quality.dimensionIssues.comment}
+                  onRatingChange={(v) => updateQuality('dimensionIssues', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('dimensionIssues', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Surface/Visual Defects Observed"
+                  value={formData.quality.surfaceVisualDefects.rating}
+                  comment={formData.quality.surfaceVisualDefects.comment}
+                  onRatingChange={(v) => updateQuality('surfaceVisualDefects', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('surfaceVisualDefects', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Reverse Glass Encountered"
+                  value={formData.quality.reverseGlass.rating}
+                  comment={formData.quality.reverseGlass.comment}
+                  onRatingChange={(v) => updateQuality('reverseGlass', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('reverseGlass', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Breakages"
+                  value={formData.quality.breakages.rating}
+                  comment={formData.quality.breakages.comment}
+                  onRatingChange={(v) => updateQuality('breakages', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('breakages', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Edge Grinding/Chipping Issues"
+                  value={formData.quality.edgeGrindingChipping.rating}
+                  comment={formData.quality.edgeGrindingChipping.comment}
+                  onRatingChange={(v) => updateQuality('edgeGrindingChipping', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('edgeGrindingChipping', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Glass Thickness Issues"
+                  value={formData.quality.glassThickness.rating}
+                  comment={formData.quality.glassThickness.comment}
+                  onRatingChange={(v) => updateQuality('glassThickness', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('glassThickness', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="AR Coating Appearance"
+                  value={formData.quality.arCoatingAppearance.rating}
+                  comment={formData.quality.arCoatingAppearance.comment}
+                  onRatingChange={(v) => updateQuality('arCoatingAppearance', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('arCoatingAppearance', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Packing and Loading Quality"
+                  value={formData.quality.packingLoadingQuality.rating}
+                  comment={formData.quality.packingLoadingQuality.comment}
+                  onRatingChange={(v) => updateQuality('packingLoadingQuality', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('packingLoadingQuality', 'comment', v)}
+                />
+                
+                <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-blue-900 font-bold text-sm md:text-base">Overall Product Quality & Performance</h3>
+                    <p className="text-blue-700 text-[10px] md:text-xs">Weighted average score of quality metrics</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-3xl font-black text-blue-800 leading-none">{averageQualityScore}</span>
+                    <span className="text-[9px] uppercase font-bold text-blue-600 mt-1">AVG SCORE</span>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-          {/* Overall Satisfaction */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Overall Satisfaction</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                { val: 5, label: 'Very Satisfied', emoji: '🤩' },
-                { val: 4, label: 'Satisfied', emoji: '🙂' },
-                { val: 3, label: 'Neutral', emoji: '😐' },
-                { val: 2, label: 'Dissatisfied', emoji: '🙁' },
-              ].map((item) => (
-                <button
-                  key={item.val}
-                  type="button"
-                  onClick={() => handleOverallChange(item.val)}
-                  className={`flex flex-col items-center p-4 border rounded-lg transition-all cursor-pointer ${
-                    formData.overallRating === item.val
-                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-4xl mb-2">{item.emoji}</span>
-                  <span className="text-sm text-gray-700 font-medium">{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+            {/* Section 3: Competitiveness */}
+            <section>
+              <SectionHeader icon={Activity} title="Market Competitiveness" subtitle="Benchmarking against industry standards" />
+              <div className="space-y-2">
+                <RatingWithComment 
+                  label="Pricing Compared to Competitors"
+                  value={formData.competitiveness.pricing.rating}
+                  comment={formData.competitiveness.pricing.comment}
+                  onRatingChange={(v) => updateCompetitiveness('pricing', 'rating', v)}
+                  onCommentChange={(v) => updateCompetitiveness('pricing', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Delivery Lead Time Compared to Competitors"
+                  value={formData.competitiveness.deliveryLeadTime.rating}
+                  comment={formData.competitiveness.deliveryLeadTime.comment}
+                  onRatingChange={(v) => updateCompetitiveness('deliveryLeadTime', 'rating', v)}
+                  onCommentChange={(v) => updateCompetitiveness('deliveryLeadTime', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Sales Service and Response Time"
+                  value={formData.competitiveness.salesServiceResponse.rating}
+                  comment={formData.competitiveness.salesServiceResponse.comment}
+                  onRatingChange={(v) => updateCompetitiveness('salesServiceResponse', 'rating', v)}
+                  onCommentChange={(v) => updateCompetitiveness('salesServiceResponse', 'comment', v)}
+                />
+                <RatingWithComment 
+                  label="Sales Team Approach and Response"
+                  value={formData.competitiveness.salesTeamApproach.rating}
+                  comment={formData.competitiveness.salesTeamApproach.comment}
+                  onRatingChange={(v) => updateCompetitiveness('salesTeamApproach', 'rating', v)}
+                  onCommentChange={(v) => updateCompetitiveness('salesTeamApproach', 'comment', v)}
+                />
+              </div>
+            </section>
 
-          <hr className="border-t border-gray-200" />
+            {/* Section 4: Others */}
+            <section>
+              <SectionHeader icon={ClipboardList} title="Additional Insights" subtitle="Understanding your sourcing and expectations" />
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-slate-700 block">Did you procure glasses from others than Borosil? And why?</label>
+                  <div className="flex gap-2">
+                    {['Yes', 'No'].map(choice => (
+                      <button
+                        key={choice}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, others: { ...prev.others, procuredOtherThanBorosil: choice } }))}
+                        className={`px-6 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                          formData.others.procuredOtherThanBorosil === choice
+                          ? 'bg-blue-600 border-blue-600 text-white shadow shadow-blue-200'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {choice}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea 
+                    className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-20"
+                    placeholder="If yes, please mention the reason..."
+                    value={formData.others.procurementReason}
+                    onChange={(e) => setFormData(prev => ({ ...prev, others: { ...prev.others, procurementReason: e.target.value } }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 block">Your expectation from Borosil Renewables Ltd.</label>
+                  <textarea 
+                    className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-20"
+                    placeholder="Future requirements or improvements..."
+                    value={formData.others.expectations}
+                    onChange={(e) => setFormData(prev => ({ ...prev, others: { ...prev.others, expectations: e.target.value } }))}
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-slate-700 block">What makes Borosil Renewables Ltd. as your preferred choice? (Select Multiple)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'Product and Service', 'Quality', 'Delivery', 
+                      'Lead Time', 'Long Term Relationship', 'Price', 'Other'
+                    ].map(choice => (
+                      <button
+                        key={choice}
+                        type="button"
+                        onClick={() => togglePreferredChoice(choice)}
+                        className={`px-3 py-1.5 rounded text-[10px] font-bold border transition-all ${
+                          formData.others.preferredChoice.includes(choice)
+                          ? 'bg-blue-600 border-blue-600 text-white shadow shadow-blue-100'
+                          : 'bg-white border-slate-200 text-slate-500 hover:border-blue-400 hover:text-blue-600'
+                        }`}
+                      >
+                        {choice}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-slate-700 block">Would you recommend us to others?</label>
+                  <div className="flex gap-2">
+                    {['Yes', 'Maybe', 'No'].map(option => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, others: { ...prev.others, recommendation: option } }))}
+                        className={`flex-1 py-2 rounded text-xs font-bold border transition-all ${
+                          formData.others.recommendation === option
+                          ? 'bg-blue-600 border-blue-600 text-white shadow shadow-blue-100'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
 
-          {/* Recommendation & Suggestions */}
-          <div className="space-y-6">
-            <div>
-              <label className="block text-base font-medium text-gray-900 mb-2">
-                Would you recommend us to others? *
-              </label>
-              <div className="flex gap-6">
-                {['Yes', 'Maybe', 'No'].map((option) => (
-                  <label key={option} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      required
-                      type="radio"
-                      name="recommendation"
-                      value={option}
-                      checked={formData.recommendation === option}
-                      onChange={(e) => setFormData({...formData, recommendation: e.target.value})}
-                      className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-700 text-lg">{option}</span>
-                  </label>
+            {/* Section 5: Overall Satisfaction */}
+            <section className="bg-slate-50 -mx-6 md:-mx-8 p-6 md:p-8 space-y-6">
+              <div className="text-center max-w-xl mx-auto">
+                <h2 className="text-xl font-bold text-slate-900">Overall Satisfaction</h2>
+                <p className="text-slate-500 text-xs">Rate your overall experience with our products and services</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
+                {[
+                  { id: 'very_satisfied', label: 'Very Satisfied', emoji: '🤩' },
+                  { id: 'satisfied', label: 'Satisfied', emoji: '🙂' },
+                  { id: 'neutral', label: 'Neutral', emoji: '😐' },
+                  { id: 'dissatisfied', label: 'Dissatisfied', emoji: '🙁' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, overallSatisfaction: item.id }))}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                      formData.overallSatisfaction === item.id
+                      ? 'bg-white border-blue-600 shadow shadow-blue-100 scale-105'
+                      : 'bg-transparent border-slate-200 hover:border-blue-200 hover:bg-white/50'
+                    }`}
+                  >
+                    <span className={`text-3xl transition-transform ${formData.overallSatisfaction === item.id ? '' : 'grayscale opacity-50'}`}>
+                      {item.emoji}
+                    </span>
+                    <span className={`text-[10px] font-bold ${formData.overallSatisfaction === item.id ? 'text-blue-700' : 'text-slate-500'}`}>
+                      {item.label}
+                    </span>
+                  </button>
                 ))}
               </div>
+
+              <div className="max-w-2xl mx-auto space-y-2 mt-8">
+                <label className="text-sm font-semibold text-slate-700 block">Suggestions or Improvement</label>
+                <textarea 
+                  className="w-full p-4 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-24"
+                  placeholder="Share any additional thoughts or specific improvement areas..."
+                  value={formData.suggestion}
+                  onChange={(e) => setFormData(prev => ({ ...prev, suggestion: e.target.value }))}
+                />
+              </div>
+            </section>
+
+            {/* Submit Button */}
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-blue-700 text-white rounded py-4 text-base font-bold shadow-md shadow-blue-100 hover:bg-blue-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit Feedback
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
             </div>
 
-            <div>
-              <label className="block text-base font-medium text-gray-900 mb-2">
-                Suggestions / Improvements
-              </label>
-              <textarea
-                rows={4}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border"
-                value={formData.suggestion}
-                onChange={(e) => setFormData({...formData, suggestion: e.target.value})}
-                placeholder="We would love to hear your thoughts..."
-              />
-            </div>
-          </div>
+          </form>
+        </div>
+      </main>
 
-          <button
-            type="submit"
-            disabled={isSubmitting || formData.overallRating === 0 || formData.qualityRating === 0}
-            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-          </button>
-          
-        </form>
-      </div>
+      <footer className="mt-8 text-center text-slate-400 text-[10px] pb-8 tracking-widest uppercase">
+        &copy; 2026 Borosil Renewables Ltd. All Rights Reserved.
+      </footer>
     </div>
   );
 }
-
-export default App;
