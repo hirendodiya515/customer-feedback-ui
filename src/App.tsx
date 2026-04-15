@@ -183,9 +183,10 @@ export default function App() {
         submittedAt: new Date().toISOString()
       };
 
-      // Target the main DMS backend by default if configured, else fallback to serverless function
-      const apiBase = import.meta.env.VITE_DEV_API_URL;
-      const url = apiBase ? `${apiBase}/customer-feedback` : '/api/feedback';
+      // In dev mode, proxy to local backend. In production (Vercel), always use the `/api/feedback` serverless function.
+      const url = import.meta.env.DEV && import.meta.env.VITE_DEV_API_URL
+        ? `${import.meta.env.VITE_DEV_API_URL}/customer-feedback`
+        : '/api/feedback';
       
       const res = await fetch(url, {
         method: 'POST',
