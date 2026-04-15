@@ -78,6 +78,7 @@ export default function App() {
       annualCapacity: '',
       representativeName: '',
       representativeMail: '',
+      brlRepresentativeName: '',
       representativeDesignation: ''
     },
     quality: {
@@ -340,7 +341,7 @@ export default function App() {
                     />
                   </div>
                 </div>
-                <div className="space-y-1 md:col-span-2">
+                <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700 ml-1">Representative Designation</label>
                   <div className="relative">
                     <Info className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -349,6 +350,18 @@ export default function App() {
                       placeholder="Position in company"
                       value={formData.basicInfo.representativeDesignation}
                       onChange={(e) => updateBasicInfo('representativeDesignation', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 ml-1">BRL Representative Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                    <input 
+                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="Enter the name of BRL representative"
+                      value={formData.basicInfo.brlRepresentativeName}
+                      onChange={(e) => updateBasicInfo('brlRepresentativeName', e.target.value)}
                     />
                   </div>
                 </div>

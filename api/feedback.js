@@ -20,6 +20,7 @@ async function ensureTables(client) {
       representative_name VARCHAR(255),
       representative_mail VARCHAR(255),
       representative_designation VARCHAR(255),
+      brl_representative_name VARCHAR(255),
       email VARCHAR(255) NOT NULL,
       product VARCHAR(255),
 
@@ -94,7 +95,7 @@ export default async function handler(req, res) {
     const feedbackResult = await client.query(
       `INSERT INTO customer_feedback 
         (company_name, plant_location, office_location, annual_capacity, contact_person, 
-         representative_name, representative_mail, representative_designation, email, product,
+         representative_name, representative_mail, representative_designation, brl_representative_name, email, product,
          thickness_dimension_quality_rating, thickness_dimension_quality_comment,
          surface_visual_quality_rating, surface_visual_quality_comment,
          breakages_rating, breakages_comment,
@@ -105,11 +106,11 @@ export default async function handler(req, res) {
          after_sales_service_response_rating, after_sales_service_response_comment, sales_team_approach_rating, sales_team_approach_comment,
          procured_other_than_borosil, procurement_reason, expectations, preferred_choice, recommendation, overall_satisfaction, suggestion)
        VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39)
        RETURNING id`,
       [
         basicInfo.customerName, basicInfo.plantLocation, basicInfo.officeLocation, basicInfo.annualCapacity, basicInfo.representativeName,
-        basicInfo.representativeName, basicInfo.representativeMail, basicInfo.representativeDesignation, basicInfo.representativeMail, 'Borosil Solar Glass',
+        basicInfo.representativeName, basicInfo.representativeMail, basicInfo.representativeDesignation, basicInfo.brlRepresentativeName || null, basicInfo.representativeMail, 'Borosil Solar Glass',
         quality.thicknessDimensionQuality.rating, quality.thicknessDimensionQuality.comment,
         quality.surfaceVisualQuality.rating, quality.surfaceVisualQuality.comment,
         quality.breakages.rating, quality.breakages.comment,
