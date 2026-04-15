@@ -81,19 +81,17 @@ export default function App() {
       representativeDesignation: ''
     },
     quality: {
-      dimensionIssues: { rating: 0, comment: '' },
-      surfaceVisualDefects: { rating: 0, comment: '' },
-      reverseGlass: { rating: 0, comment: '' },
+      thicknessDimensionQuality: { rating: 0, comment: '' },
+      surfaceVisualQuality: { rating: 0, comment: '' },
       breakages: { rating: 0, comment: '' },
-      edgeGrindingChipping: { rating: 0, comment: '' },
-      glassThickness: { rating: 0, comment: '' },
-      arCoatingAppearance: { rating: 0, comment: '' },
+      edgeGrindingQuality: { rating: 0, comment: '' },
+      arCoatingQuality: { rating: 0, comment: '' },
       packingLoadingQuality: { rating: 0, comment: '' },
     },
     competitiveness: {
       pricing: { rating: 0, comment: '' },
       deliveryLeadTime: { rating: 0, comment: '' },
-      salesServiceResponse: { rating: 0, comment: '' },
+      afterSalesServiceResponse: { rating: 0, comment: '' },
       salesTeamApproach: { rating: 0, comment: '' }
     },
     others: {
@@ -361,53 +359,39 @@ export default function App() {
               <SectionHeader icon={Trophy} title="Quality Assurance" subtitle="Rate our product quality and physical characteristics" />
               <div className="space-y-2">
                 <RatingWithComment 
-                  label="Dimension Issues Observed"
-                  value={formData.quality.dimensionIssues.rating}
-                  comment={formData.quality.dimensionIssues.comment}
-                  onRatingChange={(v) => updateQuality('dimensionIssues', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('dimensionIssues', 'comment', v)}
+                  label="Thickness & Dimension quality."
+                  value={formData.quality.thicknessDimensionQuality.rating}
+                  comment={formData.quality.thicknessDimensionQuality.comment}
+                  onRatingChange={(v) => updateQuality('thicknessDimensionQuality', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('thicknessDimensionQuality', 'comment', v)}
                 />
                 <RatingWithComment 
-                  label="Surface/Visual Defects Observed"
-                  value={formData.quality.surfaceVisualDefects.rating}
-                  comment={formData.quality.surfaceVisualDefects.comment}
-                  onRatingChange={(v) => updateQuality('surfaceVisualDefects', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('surfaceVisualDefects', 'comment', v)}
+                  label="Surface & viasual Quality."
+                  value={formData.quality.surfaceVisualQuality.rating}
+                  comment={formData.quality.surfaceVisualQuality.comment}
+                  onRatingChange={(v) => updateQuality('surfaceVisualQuality', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('surfaceVisualQuality', 'comment', v)}
                 />
                 <RatingWithComment 
-                  label="Reverse Glass Encountered"
-                  value={formData.quality.reverseGlass.rating}
-                  comment={formData.quality.reverseGlass.comment}
-                  onRatingChange={(v) => updateQuality('reverseGlass', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('reverseGlass', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Breakages"
+                  label="Glass breakages"
                   value={formData.quality.breakages.rating}
                   comment={formData.quality.breakages.comment}
                   onRatingChange={(v) => updateQuality('breakages', 'rating', v)}
                   onCommentChange={(v) => updateQuality('breakages', 'comment', v)}
                 />
                 <RatingWithComment 
-                  label="Edge Grinding/Chipping Issues"
-                  value={formData.quality.edgeGrindingChipping.rating}
-                  comment={formData.quality.edgeGrindingChipping.comment}
-                  onRatingChange={(v) => updateQuality('edgeGrindingChipping', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('edgeGrindingChipping', 'comment', v)}
+                  label="Edge grinding quality."
+                  value={formData.quality.edgeGrindingQuality.rating}
+                  comment={formData.quality.edgeGrindingQuality.comment}
+                  onRatingChange={(v) => updateQuality('edgeGrindingQuality', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('edgeGrindingQuality', 'comment', v)}
                 />
                 <RatingWithComment 
-                  label="Glass Thickness Issues"
-                  value={formData.quality.glassThickness.rating}
-                  comment={formData.quality.glassThickness.comment}
-                  onRatingChange={(v) => updateQuality('glassThickness', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('glassThickness', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="AR Coating Appearance"
-                  value={formData.quality.arCoatingAppearance.rating}
-                  comment={formData.quality.arCoatingAppearance.comment}
-                  onRatingChange={(v) => updateQuality('arCoatingAppearance', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('arCoatingAppearance', 'comment', v)}
+                  label="Coating quality."
+                  value={formData.quality.arCoatingQuality.rating}
+                  comment={formData.quality.arCoatingQuality.comment}
+                  onRatingChange={(v) => updateQuality('arCoatingQuality', 'rating', v)}
+                  onCommentChange={(v) => updateQuality('arCoatingQuality', 'comment', v)}
                 />
                 <RatingWithComment 
                   label="Packing and Loading Quality"
@@ -416,7 +400,6 @@ export default function App() {
                   onRatingChange={(v) => updateQuality('packingLoadingQuality', 'rating', v)}
                   onCommentChange={(v) => updateQuality('packingLoadingQuality', 'comment', v)}
                 />
-                
                 <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-100 flex items-center justify-between">
                   <div>
                     <h3 className="text-blue-900 font-bold text-sm md:text-base">Overall Product Quality & Performance</h3>
@@ -449,11 +432,11 @@ export default function App() {
                   onCommentChange={(v) => updateCompetitiveness('deliveryLeadTime', 'comment', v)}
                 />
                 <RatingWithComment 
-                  label="Sales Service and Response Time"
-                  value={formData.competitiveness.salesServiceResponse.rating}
-                  comment={formData.competitiveness.salesServiceResponse.comment}
-                  onRatingChange={(v) => updateCompetitiveness('salesServiceResponse', 'rating', v)}
-                  onCommentChange={(v) => updateCompetitiveness('salesServiceResponse', 'comment', v)}
+                  label="after sales service & response time"
+                  value={formData.competitiveness.afterSalesServiceResponse.rating}
+                  comment={formData.competitiveness.afterSalesServiceResponse.comment}
+                  onRatingChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'rating', v)}
+                  onCommentChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'comment', v)}
                 />
                 <RatingWithComment 
                   label="Sales Team Approach and Response"
