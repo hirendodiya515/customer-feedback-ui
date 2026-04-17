@@ -17,32 +17,41 @@ const RatingWithComment = ({
   label, 
   value, 
   comment, 
+  error,
   onRatingChange, 
   onCommentChange 
 }: { 
   label: string; 
   value: number; 
   comment: string; 
+  error?: string;
   onRatingChange: (val: number) => void; 
   onCommentChange: (val: string) => void;
 }) => {
   return (
-    <div className="space-y-2 p-3 rounded-lg transition-all hover:bg-slate-50 border border-transparent hover:border-slate-100">
+    <div className={`space-y-2 p-3 rounded-lg transition-all border ${error ? 'border-red-200 bg-red-50' : 'border-transparent hover:bg-slate-50 hover:border-slate-100'}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <span className="text-slate-700 font-semibold text-sm">{label}</span>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => onRatingChange(star)}
-              className={`transition-all duration-200 transform hover:scale-110 focus:outline-none ${
-                value >= star ? 'text-amber-400' : 'text-slate-200'
-              }`}
-            >
-              <Star className="w-6 h-6 fill-current" />
-            </button>
-          ))}
+        <span className="text-slate-700 font-semibold text-sm">{label} <span className="text-red-500">*</span></span>
+        <div className="flex flex-col items-end">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => onRatingChange(star)}
+                className={`transition-all duration-200 transform hover:scale-110 focus:outline-none ${
+                  value >= star ? 'text-amber-400' : 'text-slate-200'
+                }`}
+              >
+                <Star className="w-6 h-6 fill-current" />
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-between w-full px-0.5 mt-1 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+            <span>Poor</span>
+            <span>Excellent</span>
+          </div>
+          {error && <span className="text-[10px] text-red-500 font-bold mt-1 uppercase">{error}</span>}
         </div>
       </div>
       <textarea
@@ -61,7 +70,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle }: { icon: any, title: stri
       <div className="p-1.5 bg-blue-50 rounded">
         <Icon className="w-5 h-5" />
       </div>
-      <h2 className="text-lg font-bold uppercase tracking-tight">{title}</h2>
+      <h2 className="text-lg font-bold uppercase tracking-tight">{title} <span className="text-red-500">*</span></h2>
     </div>
     {subtitle && <p className="text-slate-500 text-xs mt-0.5 ml-9">{subtitle}</p>}
   </div>
@@ -162,16 +171,51 @@ export default function App() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple validation
+    // Comprehensive validation
     const newErrors: Record<string, string> = {};
-    if (!formData.basicInfo.customerName) newErrors.customerName = 'Required';
+    
+    // Basic Info Validation
+    if (!formData.basicInfo.customerName.trim()) newErrors.customerName = 'Required';
+    if (!formData.basicInfo.plantLocation.trim()) newErrors.plantLocation = 'Required';
+    if (!formData.basicInfo.officeLocation.trim()) newErrors.officeLocation = 'Required';
+    if (!formData.basicInfo.annualCapacity.trim()) newErrors.annualCapacity = 'Required';
+    if (!formData.basicInfo.representativeName.trim()) newErrors.representativeName = 'Required';
     if (!formData.basicInfo.representativeMail || !validateEmail(formData.basicInfo.representativeMail)) {
       newErrors.representativeMail = 'Valid email required';
     }
+    if (!formData.basicInfo.representativeDesignation.trim()) newErrors.representativeDesignation = 'Required';
+    if (!formData.basicInfo.brlRepresentativeName.trim()) newErrors.brlRepresentativeName = 'Required';
+
+    // Quality Ratings Validation
+    Object.entries(formData.quality).forEach(([key, value]) => {
+      if (value.rating === 0) newErrors[`quality_${key}`] = 'Rating Required';
+    });
+
+    // Competitiveness Ratings Validation
+    Object.entries(formData.competitiveness).forEach(([key, value]) => {
+      if (value.rating === 0) newErrors[`competitiveness_${key}`] = 'Rating Required';
+    });
+
+    // Other Questions Validation
+    if (!formData.others.procuredOtherThanBorosil) newErrors.procuredOtherThanBorosil = 'Required';
+    if (formData.others.procuredOtherThanBorosil === 'Yes' && !formData.others.procurementReason.trim()) {
+      newErrors.procurementReason = 'Please specify reason';
+    }
+    if (!formData.others.expectations.trim()) newErrors.expectations = 'Required';
+    if (formData.others.preferredChoice.length === 0) newErrors.preferredChoice = 'Select at least one';
+    if (!formData.others.recommendation) newErrors.recommendation = 'Required';
+    if (!formData.overallSatisfaction) newErrors.overallSatisfaction = 'Required';
+    if (!formData.suggestion.trim()) newErrors.suggestion = 'Required';
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const firstErrorKey = Object.keys(newErrors)[0];
+      const element = document.getElementById(firstErrorKey) || document.getElementsByName(firstErrorKey)[0];
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
@@ -253,11 +297,20 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto px-4 pt-8">
         <div className="bg-white rounded-2xl shadow shadow-slate-200/50 overflow-hidden border border-slate-100">
-          <div className="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 md:p-8 text-white">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Voice Matters!</h1>
-            <p className="text-blue-100 text-sm max-w-xl opacity-90">
-              Help us refine our processes and products. Your honest feedback is instrumental in our journey toward excellence.
-            </p>
+          <div className="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 md:p-8 text-white relative overflow-hidden">
+            <div className="relative z-10">
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Voice Matters!</h1>
+              <p className="text-blue-100 text-sm max-w-xl opacity-90">
+                Help us refine our processes and products. Your honest feedback is instrumental in our journey towards excellence.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map(s => <Star key={s} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-tight">Note: High ratings indicate positive feedback</span>
+              </div>
+            </div>
+            <Activity className="absolute right-[-20px] bottom-[-20px] w-48 h-48 text-white/5 rotate-12" />
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-12">
@@ -280,11 +333,13 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 ml-1">Plant Location</label>
+                  <label className="text-xs font-bold text-slate-700 ml-1">Plant Location *</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      required
+                      name="plantLocation"
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.plantLocation ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="City/State"
                       value={formData.basicInfo.plantLocation}
                       onChange={(e) => updateBasicInfo('plantLocation', e.target.value)}
@@ -292,11 +347,13 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 ml-1">Office Location</label>
+                  <label className="text-xs font-bold text-slate-700 ml-1">Office Location *</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      required
+                      name="officeLocation"
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.officeLocation ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="Headquarters"
                       value={formData.basicInfo.officeLocation}
                       onChange={(e) => updateBasicInfo('officeLocation', e.target.value)}
@@ -304,11 +361,13 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 ml-1">Annual Capacity</label>
+                  <label className="text-xs font-bold text-slate-700 ml-1">Annual Capacity *</label>
                   <div className="relative">
                     <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      required
+                      name="annualCapacity"
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.annualCapacity ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="e.g. 100MW"
                       value={formData.basicInfo.annualCapacity}
                       onChange={(e) => updateBasicInfo('annualCapacity', e.target.value)}
@@ -316,11 +375,13 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 ml-1">Representative Name</label>
+                  <label className="text-xs font-bold text-slate-700 ml-1">Representative Name *</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      required
+                      name="representativeName"
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.representativeName ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="Contact Person"
                       value={formData.basicInfo.representativeName}
                       onChange={(e) => updateBasicInfo('representativeName', e.target.value)}
@@ -333,6 +394,7 @@ export default function App() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
                       required
+                      name="representativeMail"
                       type="email"
                       className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.representativeMail ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="email@example.com"
@@ -342,11 +404,13 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 ml-1">Representative Designation</label>
+                  <label className="text-xs font-bold text-slate-700 ml-1">Representative Designation *</label>
                   <div className="relative">
                     <Info className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      required
+                      name="representativeDesignation"
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.representativeDesignation ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="Position in company"
                       value={formData.basicInfo.representativeDesignation}
                       onChange={(e) => updateBasicInfo('representativeDesignation', e.target.value)}
@@ -354,11 +418,13 @@ export default function App() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 ml-1">BRL Representative Name</label>
+                  <label className="text-xs font-bold text-slate-700 ml-1">BRL Representative Name *</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                      required
+                      name="brlRepresentativeName"
+                      className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.brlRepresentativeName ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="Enter the name of BRL representative"
                       value={formData.basicInfo.brlRepresentativeName}
                       onChange={(e) => updateBasicInfo('brlRepresentativeName', e.target.value)}
@@ -372,48 +438,66 @@ export default function App() {
             <section>
               <SectionHeader icon={Trophy} title="Quality Assurance" subtitle="Rate our product quality and physical characteristics" />
               <div className="space-y-2">
-                <RatingWithComment 
-                  label="Thickness & Dimension quality."
-                  value={formData.quality.thicknessDimensionQuality.rating}
-                  comment={formData.quality.thicknessDimensionQuality.comment}
-                  onRatingChange={(v) => updateQuality('thicknessDimensionQuality', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('thicknessDimensionQuality', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Surface & viasual Quality."
-                  value={formData.quality.surfaceVisualQuality.rating}
-                  comment={formData.quality.surfaceVisualQuality.comment}
-                  onRatingChange={(v) => updateQuality('surfaceVisualQuality', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('surfaceVisualQuality', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Glass breakages"
-                  value={formData.quality.breakages.rating}
-                  comment={formData.quality.breakages.comment}
-                  onRatingChange={(v) => updateQuality('breakages', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('breakages', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Edge grinding quality."
-                  value={formData.quality.edgeGrindingQuality.rating}
-                  comment={formData.quality.edgeGrindingQuality.comment}
-                  onRatingChange={(v) => updateQuality('edgeGrindingQuality', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('edgeGrindingQuality', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Coating quality."
-                  value={formData.quality.arCoatingQuality.rating}
-                  comment={formData.quality.arCoatingQuality.comment}
-                  onRatingChange={(v) => updateQuality('arCoatingQuality', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('arCoatingQuality', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Packing and Loading Quality"
-                  value={formData.quality.packingLoadingQuality.rating}
-                  comment={formData.quality.packingLoadingQuality.comment}
-                  onRatingChange={(v) => updateQuality('packingLoadingQuality', 'rating', v)}
-                  onCommentChange={(v) => updateQuality('packingLoadingQuality', 'comment', v)}
-                />
+                <div id="quality_thicknessDimensionQuality">
+                  <RatingWithComment 
+                    label="Thickness & Dimension quality."
+                    value={formData.quality.thicknessDimensionQuality.rating}
+                    comment={formData.quality.thicknessDimensionQuality.comment}
+                    error={errors.quality_thicknessDimensionQuality}
+                    onRatingChange={(v) => updateQuality('thicknessDimensionQuality', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('thicknessDimensionQuality', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_surfaceVisualQuality">
+                  <RatingWithComment 
+                    label="Surface & Visual Quality."
+                    value={formData.quality.surfaceVisualQuality.rating}
+                    comment={formData.quality.surfaceVisualQuality.comment}
+                    error={errors.quality_surfaceVisualQuality}
+                    onRatingChange={(v) => updateQuality('surfaceVisualQuality', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('surfaceVisualQuality', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_breakages">
+                  <RatingWithComment 
+                    label="Satisfaction with glass breakage inside pallets"
+                    value={formData.quality.breakages.rating}
+                    comment={formData.quality.breakages.comment}
+                    error={errors.quality_breakages}
+                    onRatingChange={(v) => updateQuality('breakages', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('breakages', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_edgeGrindingQuality">
+                  <RatingWithComment 
+                    label="Edge grinding quality."
+                    value={formData.quality.edgeGrindingQuality.rating}
+                    comment={formData.quality.edgeGrindingQuality.comment}
+                    error={errors.quality_edgeGrindingQuality}
+                    onRatingChange={(v) => updateQuality('edgeGrindingQuality', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('edgeGrindingQuality', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_arCoatingQuality">
+                  <RatingWithComment 
+                    label="Coating quality."
+                    value={formData.quality.arCoatingQuality.rating}
+                    comment={formData.quality.arCoatingQuality.comment}
+                    error={errors.quality_arCoatingQuality}
+                    onRatingChange={(v) => updateQuality('arCoatingQuality', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('arCoatingQuality', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_packingLoadingQuality">
+                  <RatingWithComment 
+                    label="Packing and Loading quality"
+                    value={formData.quality.packingLoadingQuality.rating}
+                    comment={formData.quality.packingLoadingQuality.comment}
+                    error={errors.quality_packingLoadingQuality}
+                    onRatingChange={(v) => updateQuality('packingLoadingQuality', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('packingLoadingQuality', 'comment', v)}
+                  />
+                </div>
                 <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-100 flex items-center justify-between">
                   <div>
                     <h3 className="text-blue-900 font-bold text-sm md:text-base">Overall Product Quality & Performance</h3>
@@ -431,34 +515,46 @@ export default function App() {
             <section>
               <SectionHeader icon={Activity} title="Market Competitiveness" subtitle="Benchmarking against industry standards" />
               <div className="space-y-2">
-                <RatingWithComment 
-                  label="Pricing Compared to Competitors"
-                  value={formData.competitiveness.pricing.rating}
-                  comment={formData.competitiveness.pricing.comment}
-                  onRatingChange={(v) => updateCompetitiveness('pricing', 'rating', v)}
-                  onCommentChange={(v) => updateCompetitiveness('pricing', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Delivery Lead Time Compared to Competitors"
-                  value={formData.competitiveness.deliveryLeadTime.rating}
-                  comment={formData.competitiveness.deliveryLeadTime.comment}
-                  onRatingChange={(v) => updateCompetitiveness('deliveryLeadTime', 'rating', v)}
-                  onCommentChange={(v) => updateCompetitiveness('deliveryLeadTime', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="after sales service & response time"
-                  value={formData.competitiveness.afterSalesServiceResponse.rating}
-                  comment={formData.competitiveness.afterSalesServiceResponse.comment}
-                  onRatingChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'rating', v)}
-                  onCommentChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'comment', v)}
-                />
-                <RatingWithComment 
-                  label="Sales Team Approach and Response"
-                  value={formData.competitiveness.salesTeamApproach.rating}
-                  comment={formData.competitiveness.salesTeamApproach.comment}
-                  onRatingChange={(v) => updateCompetitiveness('salesTeamApproach', 'rating', v)}
-                  onCommentChange={(v) => updateCompetitiveness('salesTeamApproach', 'comment', v)}
-                />
+                <div id="competitiveness_pricing">
+                  <RatingWithComment 
+                    label="Pricing Compared to Competitors"
+                    value={formData.competitiveness.pricing.rating}
+                    comment={formData.competitiveness.pricing.comment}
+                    error={errors.competitiveness_pricing}
+                    onRatingChange={(v) => updateCompetitiveness('pricing', 'rating', v)}
+                    onCommentChange={(v) => updateCompetitiveness('pricing', 'comment', v)}
+                  />
+                </div>
+                <div id="competitiveness_deliveryLeadTime">
+                  <RatingWithComment 
+                    label="Delivery Lead Time Compared to Competitors"
+                    value={formData.competitiveness.deliveryLeadTime.rating}
+                    comment={formData.competitiveness.deliveryLeadTime.comment}
+                    error={errors.competitiveness_deliveryLeadTime}
+                    onRatingChange={(v) => updateCompetitiveness('deliveryLeadTime', 'rating', v)}
+                    onCommentChange={(v) => updateCompetitiveness('deliveryLeadTime', 'comment', v)}
+                  />
+                </div>
+                <div id="competitiveness_afterSalesServiceResponse">
+                  <RatingWithComment 
+                    label="After sales service & response time"
+                    value={formData.competitiveness.afterSalesServiceResponse.rating}
+                    comment={formData.competitiveness.afterSalesServiceResponse.comment}
+                    error={errors.competitiveness_afterSalesServiceResponse}
+                    onRatingChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'rating', v)}
+                    onCommentChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'comment', v)}
+                  />
+                </div>
+                <div id="competitiveness_salesTeamApproach">
+                  <RatingWithComment 
+                    label="Sales Team Approach and Response"
+                    value={formData.competitiveness.salesTeamApproach.rating}
+                    comment={formData.competitiveness.salesTeamApproach.comment}
+                    error={errors.competitiveness_salesTeamApproach}
+                    onRatingChange={(v) => updateCompetitiveness('salesTeamApproach', 'rating', v)}
+                    onCommentChange={(v) => updateCompetitiveness('salesTeamApproach', 'comment', v)}
+                  />
+                </div>
               </div>
             </section>
 
@@ -466,8 +562,8 @@ export default function App() {
             <section>
               <SectionHeader icon={ClipboardList} title="Additional Insights" subtitle="Understanding your sourcing and expectations" />
               <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-700 block">Did you procure glasses from others than Borosil? And why?</label>
+                <div className="space-y-3" id="procuredOtherThanBorosil">
+                  <label className="text-sm font-semibold text-slate-700 block">Do you procure glasses apart from Borosil? And why? <span className="text-red-500">*</span></label>
                   <div className="flex gap-2">
                     {['Yes', 'No'].map(choice => (
                       <button
@@ -477,7 +573,7 @@ export default function App() {
                         className={`px-6 py-1.5 rounded-full text-xs font-bold border transition-all ${
                           formData.others.procuredOtherThanBorosil === choice
                           ? 'bg-blue-600 border-blue-600 text-white shadow shadow-blue-200'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : errors.procuredOtherThanBorosil ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         {choice}
@@ -485,23 +581,26 @@ export default function App() {
                     ))}
                   </div>
                   <textarea 
-                    className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-20"
+                    id="procurementReason"
+                    className={`w-full p-3 text-xs bg-slate-50 border ${errors.procurementReason ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-20`}
                     placeholder="If yes, please mention the reason..."
                     value={formData.others.procurementReason}
                     onChange={(e) => setFormData(prev => ({ ...prev, others: { ...prev.others, procurementReason: e.target.value } }))}
                   />
+                  {errors.procurementReason && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.procurementReason}</p>}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700 block">Your expectation from Borosil Renewables Ltd.</label>
+                  <label className="text-sm font-semibold text-slate-700 block">Your expectation from Borosil Renewables Ltd. <span className="text-red-500">*</span></label>
                   <textarea 
-                    className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-20"
+                    id="expectations"
+                    className={`w-full p-3 text-xs bg-slate-50 border ${errors.expectations ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-20`}
                     placeholder="Future requirements or improvements..."
                     value={formData.others.expectations}
                     onChange={(e) => setFormData(prev => ({ ...prev, others: { ...prev.others, expectations: e.target.value } }))}
                   />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-700 block">What makes Borosil Renewables Ltd. as your preferred choice? (Select Multiple)</label>
+                <div className="space-y-3" id="preferredChoice">
+                  <label className="text-sm font-semibold text-slate-700 block">What makes Borosil Renewables Ltd. as your preferred choice? (Select Multiple) <span className="text-red-500">*</span></label>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'Product and Service', 'Quality', 'Delivery', 
@@ -514,16 +613,17 @@ export default function App() {
                         className={`px-3 py-1.5 rounded text-[10px] font-bold border transition-all ${
                           formData.others.preferredChoice.includes(choice)
                           ? 'bg-blue-600 border-blue-600 text-white shadow shadow-blue-100'
-                          : 'bg-white border-slate-200 text-slate-500 hover:border-blue-400 hover:text-blue-600'
+                          : errors.preferredChoice ? 'bg-red-50 border-red-200 text-red-400' : 'bg-white border-slate-200 text-slate-500 hover:border-blue-400 hover:text-blue-600'
                         }`}
                       >
                         {choice}
                       </button>
                     ))}
                   </div>
+                  {errors.preferredChoice && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.preferredChoice}</p>}
                 </div>
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-slate-700 block">Would you recommend us to others?</label>
+                <div className="space-y-3" id="recommendation">
+                  <label className="text-sm font-semibold text-slate-700 block">Would you recommend us to others? <span className="text-red-500">*</span></label>
                   <div className="flex gap-2">
                     {['Yes', 'Maybe', 'No'].map(option => (
                       <button
@@ -533,7 +633,7 @@ export default function App() {
                         className={`flex-1 py-2 rounded text-xs font-bold border transition-all ${
                           formData.others.recommendation === option
                           ? 'bg-blue-600 border-blue-600 text-white shadow shadow-blue-100'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          : errors.recommendation ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         {option}
@@ -545,9 +645,9 @@ export default function App() {
             </section>
 
             {/* Section 5: Overall Satisfaction */}
-            <section className="bg-slate-50 -mx-6 md:-mx-8 p-6 md:p-8 space-y-6">
+            <section className="bg-slate-50 -mx-6 md:-mx-8 p-6 md:p-8 space-y-6" id="overallSatisfaction">
               <div className="text-center max-w-xl mx-auto">
-                <h2 className="text-xl font-bold text-slate-900">Overall Satisfaction</h2>
+                <h2 className="text-xl font-bold text-slate-900">Overall Satisfaction <span className="text-red-500">*</span></h2>
                 <p className="text-slate-500 text-xs">Rate your overall experience with our products and services</p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
@@ -564,7 +664,7 @@ export default function App() {
                     className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
                       formData.overallSatisfaction === item.id
                       ? 'bg-white border-blue-600 shadow shadow-blue-100 scale-105'
-                      : 'bg-transparent border-slate-200 hover:border-blue-200 hover:bg-white/50'
+                      : errors.overallSatisfaction ? 'bg-red-50 border-red-200' : 'bg-transparent border-slate-200 hover:border-blue-200 hover:bg-white/50'
                     }`}
                   >
                     <span className={`text-3xl transition-transform ${formData.overallSatisfaction === item.id ? '' : 'grayscale opacity-50'}`}>
@@ -578,9 +678,10 @@ export default function App() {
               </div>
 
               <div className="max-w-2xl mx-auto space-y-2 mt-8">
-                <label className="text-sm font-semibold text-slate-700 block">Suggestions or Improvement</label>
+                <label className="text-sm font-semibold text-slate-700 block">Suggestions or Improvement <span className="text-red-500">*</span></label>
                 <textarea 
-                  className="w-full p-4 text-xs bg-white border border-slate-200 rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-24"
+                  id="suggestion"
+                  className={`w-full p-4 text-xs bg-white border ${errors.suggestion ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all h-24`}
                   placeholder="Share any additional thoughts or specific improvement areas..."
                   value={formData.suggestion}
                   onChange={(e) => setFormData(prev => ({ ...prev, suggestion: e.target.value }))}
