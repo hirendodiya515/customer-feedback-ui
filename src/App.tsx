@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Star, 
   Mail, 
   User, 
   MapPin, 
