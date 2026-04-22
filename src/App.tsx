@@ -28,26 +28,43 @@ const RatingWithComment = ({
   onRatingChange: (val: number) => void; 
   onCommentChange: (val: string) => void;
 }) => {
+  const [hoverValue, setHoverValue] = useState(0);
+
+  const ratingColors: Record<number, string> = {
+    1: 'bg-red-600',
+    2: 'bg-orange-500',
+    3: 'bg-yellow-400',
+    4: 'bg-lime-500',
+    5: 'bg-green-800',
+  };
+
   return (
     <div className={`space-y-2 p-3 rounded-lg transition-all border ${error ? 'border-red-200 bg-red-50' : 'border-transparent hover:bg-slate-50 hover:border-slate-100'}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <span className="text-slate-700 font-semibold text-sm">{label} <span className="text-red-500">*</span></span>
         <div className="flex flex-col items-end">
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => onRatingChange(star)}
-                className={`transition-all duration-200 transform hover:scale-110 focus:outline-none ${
-                  value >= star ? 'text-amber-400' : 'text-slate-200'
-                }`}
-              >
-                <Star className="w-6 h-6 fill-current" />
-              </button>
-            ))}
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((num) => {
+              const isActive = (hoverValue === num) || (hoverValue === 0 && value === num);
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  onMouseEnter={() => setHoverValue(num)}
+                  onMouseLeave={() => setHoverValue(0)}
+                  onClick={() => onRatingChange(num)}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 transform hover:scale-110 focus:outline-none ${
+                    isActive 
+                    ? `${ratingColors[num as keyof typeof ratingColors]} text-white shadow-md shadow-slate-200` 
+                    : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                  }`}
+                >
+                  {num}
+                </button>
+              );
+            })}
           </div>
-          <div className="flex justify-between w-full px-0.5 mt-1 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+          <div className="flex justify-between w-full px-1 mt-1 text-[9px] font-bold text-slate-400 uppercase tracking-tight">
             <span>Poor</span>
             <span>Excellent</span>
           </div>
@@ -304,9 +321,7 @@ export default function App() {
                 Help us refine our processes and products. Your honest feedback is instrumental in our journey towards excellence.
               </p>
               <div className="mt-4 inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full border border-white/20">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(s => <Star key={s} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
-                </div>
+                
                 <span className="text-[10px] font-bold uppercase tracking-tight">Note: High ratings indicate positive feedback</span>
               </div>
             </div>
