@@ -113,12 +113,20 @@ export default function App() {
       edgeGrindingQuality: { rating: 0, comment: '' },
       arCoatingQuality: { rating: 0, comment: '' },
       packingLoadingQuality: { rating: 0, comment: '' },
+      solarGlassQuality: { rating: 0, comment: '' },
+      energyGenerationPerformance: { rating: 0, comment: '' },
+      technicalStandardsCompliance: { rating: 0, comment: '' },
     },
     competitiveness: {
       pricing: { rating: 0, comment: '' },
       deliveryLeadTime: { rating: 0, comment: '' },
-      afterSalesServiceResponse: { rating: 0, comment: '' },
-      salesTeamApproach: { rating: 0, comment: '' }
+      supportSatisfaction: { rating: 0, comment: '' },
+      salesTeamApproach: { rating: 0, comment: '' },
+      documentationAccuracy: { rating: 0, comment: '' },
+    },
+    expectations: {
+      solarGlassExpectations: { rating: 0, comment: '' },
+      futureUseLikelihood: { rating: 0, comment: '' },
     },
     others: {
       procuredOtherThanBorosil: '', // 'Yes' or 'No'
@@ -174,6 +182,16 @@ export default function App() {
     }));
   };
 
+  const updateExpectations = (field: string, type: 'rating' | 'comment', value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      expectations: {
+        ...prev.expectations,
+        [field]: { ...(prev.expectations as any)[field], [type]: value }
+      }
+    }));
+  };
+
   const togglePreferredChoice = (choice: string) => {
     setFormData(prev => {
       const current = prev.others.preferredChoice;
@@ -210,6 +228,11 @@ export default function App() {
     // Competitiveness Ratings Validation
     Object.entries(formData.competitiveness).forEach(([key, value]) => {
       if (value.rating === 0) newErrors[`competitiveness_${key}`] = 'Rating Required';
+    });
+
+    // Expectations Ratings Validation
+    Object.entries(formData.expectations).forEach(([key, value]) => {
+      if (value.rating === 0) newErrors[`expectations_${key}`] = 'Rating Required';
     });
 
     // Other Questions Validation
@@ -293,7 +316,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-8">
+    <div className="min-h-screen bg-[#f1f5f9] pb-8">
       {/* Refined Header: L-C-R Alignment */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm transition-all duration-300 backdrop-blur-md bg-white/95">
         <div className="max-w-7xl mx-auto px-6 py-5 grid grid-cols-3 items-center">
@@ -312,7 +335,7 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-8">
-        <div className="bg-white rounded-2xl shadow shadow-slate-200/50 overflow-hidden border border-slate-100">
+        <div className="bg-white rounded-2xl shadow-xl shadow-slate-300/60 overflow-hidden border border-slate-200/80">
           <div className="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 md:p-8 text-white relative overflow-hidden">
             <div className="relative z-10">
               <h1 className="text-2xl md:text-3xl font-bold mb-2">Your Voice Matters!</h1>
@@ -504,12 +527,42 @@ export default function App() {
                 </div>
                 <div id="quality_packingLoadingQuality">
                   <RatingWithComment 
-                    label="Packing and Loading quality"
+                    label="Was the product well-packaged and received in good condition?"
                     value={formData.quality.packingLoadingQuality.rating}
                     comment={formData.quality.packingLoadingQuality.comment}
                     error={errors.quality_packingLoadingQuality}
                     onRatingChange={(v) => updateQuality('packingLoadingQuality', 'rating', v)}
                     onCommentChange={(v) => updateQuality('packingLoadingQuality', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_solarGlassQuality">
+                  <RatingWithComment 
+                    label="How would you rate the quality of the solar glass?"
+                    value={formData.quality.solarGlassQuality.rating}
+                    comment={formData.quality.solarGlassQuality.comment}
+                    error={errors.quality_solarGlassQuality}
+                    onRatingChange={(v) => updateQuality('solarGlassQuality', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('solarGlassQuality', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_energyGenerationPerformance">
+                  <RatingWithComment 
+                    label="How satisfied are you with the energy generation performance of our product?"
+                    value={formData.quality.energyGenerationPerformance.rating}
+                    comment={formData.quality.energyGenerationPerformance.comment}
+                    error={errors.quality_energyGenerationPerformance}
+                    onRatingChange={(v) => updateQuality('energyGenerationPerformance', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('energyGenerationPerformance', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_technicalStandardsCompliance">
+                  <RatingWithComment 
+                    label="Compliance with technical standards"
+                    value={formData.quality.technicalStandardsCompliance.rating}
+                    comment={formData.quality.technicalStandardsCompliance.comment}
+                    error={errors.quality_technicalStandardsCompliance}
+                    onRatingChange={(v) => updateQuality('technicalStandardsCompliance', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('technicalStandardsCompliance', 'comment', v)}
                   />
                 </div>
                 <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-100 flex items-center justify-between">
@@ -525,9 +578,9 @@ export default function App() {
               </div>
             </section>
 
-            {/* Section 3: Competitiveness */}
+            {/* Section 3: Competitiveness & Support */}
             <section>
-              <SectionHeader icon={Activity} title="Market Competitiveness" subtitle="Benchmarking against industry standards" />
+              <SectionHeader icon={Activity} title="Service, Support & Competitiveness" subtitle="Benchmarking service quality and industry standards" />
               <div className="space-y-2">
                 <div id="competitiveness_pricing">
                   <RatingWithComment 
@@ -541,7 +594,7 @@ export default function App() {
                 </div>
                 <div id="competitiveness_deliveryLeadTime">
                   <RatingWithComment 
-                    label="Delivery Lead Time Compared to Competitors"
+                    label="Was the delivery/shipping process timely?"
                     value={formData.competitiveness.deliveryLeadTime.rating}
                     comment={formData.competitiveness.deliveryLeadTime.comment}
                     error={errors.competitiveness_deliveryLeadTime}
@@ -549,24 +602,34 @@ export default function App() {
                     onCommentChange={(v) => updateCompetitiveness('deliveryLeadTime', 'comment', v)}
                   />
                 </div>
-                <div id="competitiveness_afterSalesServiceResponse">
+                <div id="competitiveness_supportSatisfaction">
                   <RatingWithComment 
-                    label="After sales service & response time"
-                    value={formData.competitiveness.afterSalesServiceResponse.rating}
-                    comment={formData.competitiveness.afterSalesServiceResponse.comment}
-                    error={errors.competitiveness_afterSalesServiceResponse}
-                    onRatingChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'rating', v)}
-                    onCommentChange={(v) => updateCompetitiveness('afterSalesServiceResponse', 'comment', v)}
+                    label="How satisfied are you with the support you received?"
+                    value={formData.competitiveness.supportSatisfaction.rating}
+                    comment={formData.competitiveness.supportSatisfaction.comment}
+                    error={errors.competitiveness_supportSatisfaction}
+                    onRatingChange={(v) => updateCompetitiveness('supportSatisfaction', 'rating', v)}
+                    onCommentChange={(v) => updateCompetitiveness('supportSatisfaction', 'comment', v)}
                   />
                 </div>
                 <div id="competitiveness_salesTeamApproach">
                   <RatingWithComment 
-                    label="Sales Team Approach and Response"
+                    label="How easy was it to reach our team ?"
                     value={formData.competitiveness.salesTeamApproach.rating}
                     comment={formData.competitiveness.salesTeamApproach.comment}
                     error={errors.competitiveness_salesTeamApproach}
                     onRatingChange={(v) => updateCompetitiveness('salesTeamApproach', 'rating', v)}
                     onCommentChange={(v) => updateCompetitiveness('salesTeamApproach', 'comment', v)}
+                  />
+                </div>
+                <div id="competitiveness_documentationAccuracy">
+                  <RatingWithComment 
+                    label="Accuracy of documentation (e.g., invoices, test reports)"
+                    value={formData.competitiveness.documentationAccuracy.rating}
+                    comment={formData.competitiveness.documentationAccuracy.comment}
+                    error={errors.competitiveness_documentationAccuracy}
+                    onRatingChange={(v) => updateCompetitiveness('documentationAccuracy', 'rating', v)}
+                    onCommentChange={(v) => updateCompetitiveness('documentationAccuracy', 'comment', v)}
                   />
                 </div>
               </div>
@@ -603,6 +666,33 @@ export default function App() {
                   />
                   {errors.procurementReason && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.procurementReason}</p>}
                 </div>
+
+                <div className="border-t border-slate-100 pt-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-800">Product Expectations & Future Loyalty</h3>
+
+                  <div id="expectations_solarGlassExpectations">
+                    <RatingWithComment 
+                      label="How well does the solar glass meet your expectations?"
+                      value={formData.expectations.solarGlassExpectations.rating}
+                      comment={formData.expectations.solarGlassExpectations.comment}
+                      error={errors.expectations_solarGlassExpectations}
+                      onRatingChange={(v) => updateExpectations('solarGlassExpectations', 'rating', v)}
+                      onCommentChange={(v) => updateExpectations('solarGlassExpectations', 'comment', v)}
+                    />
+                  </div>
+
+                  <div id="expectations_futureUseLikelihood">
+                    <RatingWithComment 
+                      label="How likely are you to use our product again in the future ?"
+                      value={formData.expectations.futureUseLikelihood.rating}
+                      comment={formData.expectations.futureUseLikelihood.comment}
+                      error={errors.expectations_futureUseLikelihood}
+                      onRatingChange={(v) => updateExpectations('futureUseLikelihood', 'rating', v)}
+                      onCommentChange={(v) => updateExpectations('futureUseLikelihood', 'comment', v)}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 block">Your expectation from Borosil Renewables Ltd. <span className="text-red-500">*</span></label>
                   <textarea 
@@ -661,15 +751,16 @@ export default function App() {
             {/* Section 5: Overall Satisfaction */}
             <section className="bg-slate-50 -mx-6 md:-mx-8 p-6 md:p-8 space-y-6" id="overallSatisfaction">
               <div className="text-center max-w-xl mx-auto">
-                <h2 className="text-xl font-bold text-slate-900">Overall Satisfaction <span className="text-red-500">*</span></h2>
+                <h2 className="text-xl font-bold text-slate-900">How satisfied are you with your overall experience with our product?<span className="text-red-500">*</span></h2>
                 <p className="text-slate-500 text-xs">Rate your overall experience with our products and services</p>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 max-w-2xl mx-auto">
                 {[
                   { id: 'very_satisfied', label: 'Very Satisfied', emoji: '🤩' },
                   { id: 'satisfied', label: 'Satisfied', emoji: '🙂' },
                   { id: 'neutral', label: 'Neutral', emoji: '😐' },
                   { id: 'dissatisfied', label: 'Dissatisfied', emoji: '🙁' },
+                  { id: 'very_dissatisfied', label: 'Very Dissatisfied', emoji: '😞' },
                 ].map((item) => (
                   <button
                     key={item.id}

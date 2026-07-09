@@ -37,17 +37,33 @@ async function ensureTables(client) {
       ar_coating_quality_comment TEXT,
       packing_loading_quality_rating INT DEFAULT 0,
       packing_loading_quality_comment TEXT,
+      solar_glass_quality_rating INT DEFAULT 0,
+      solar_glass_quality_comment TEXT,
+      energy_generation_performance_rating INT DEFAULT 0,
+      energy_generation_performance_comment TEXT,
+      technical_standards_compliance_rating INT DEFAULT 0,
+      technical_standards_compliance_comment TEXT,
       quality_average VARCHAR(10),
 
-      -- Competitiveness Ratings (updated)
+      -- Competitiveness & Support Ratings (updated)
       pricing_rating INT DEFAULT 0,
       pricing_comment TEXT,
       delivery_lead_time_rating INT DEFAULT 0,
       delivery_lead_time_comment TEXT,
       after_sales_service_response_rating INT DEFAULT 0,
       after_sales_service_response_comment TEXT,
+      support_satisfaction_rating INT DEFAULT 0,
+      support_satisfaction_comment TEXT,
       sales_team_approach_rating INT DEFAULT 0,
       sales_team_approach_comment TEXT,
+      documentation_accuracy_rating INT DEFAULT 0,
+      documentation_accuracy_comment TEXT,
+
+      -- Expectations Ratings
+      solar_glass_expectations_rating INT DEFAULT 0,
+      solar_glass_expectations_comment TEXT,
+      future_use_likelihood_rating INT DEFAULT 0,
+      future_use_likelihood_comment TEXT,
 
       -- Insights
       procured_other_than_borosil VARCHAR(10),
@@ -60,6 +76,25 @@ async function ensureTables(client) {
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
+
+  // Ensure new columns exist on existing table installations
+  await client.query(`
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS solar_glass_quality_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS solar_glass_quality_comment TEXT;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS energy_generation_performance_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS energy_generation_performance_comment TEXT;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS technical_standards_compliance_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS technical_standards_compliance_comment TEXT;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS support_satisfaction_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS support_satisfaction_comment TEXT;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS documentation_accuracy_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS documentation_accuracy_comment TEXT;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS solar_glass_expectations_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS solar_glass_expectations_comment TEXT;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS future_use_likelihood_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS future_use_likelihood_comment TEXT;
+  `);
+
   await client.query(`
     CREATE TABLE IF NOT EXISTS corrective_action_requests (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -89,7 +124,7 @@ export default async function handler(req, res) {
     await client.query('BEGIN');
 
     const payload = req.body;
-    const { basicInfo, quality, competitiveness, others, overallSatisfaction, suggestion, qualityAverage } = payload;
+    const { basicInfo, quality, competitiveness, expectations, others, overallSatisfaction, suggestion, qualityAverage } = payload;
 
     // Insert feedback
     const feedbackResult = await client.query(
@@ -102,11 +137,17 @@ export default async function handler(req, res) {
          edge_grinding_quality_rating, edge_grinding_quality_comment,
          ar_coating_quality_rating, ar_coating_quality_comment,
          packing_loading_quality_rating, packing_loading_quality_comment,
+         solar_glass_quality_rating, solar_glass_quality_comment,
+         energy_generation_performance_rating, energy_generation_performance_comment,
+         technical_standards_compliance_rating, technical_standards_compliance_comment,
          quality_average, pricing_rating, pricing_comment, delivery_lead_time_rating, delivery_lead_time_comment,
-         after_sales_service_response_rating, after_sales_service_response_comment, sales_team_approach_rating, sales_team_approach_comment,
+         support_satisfaction_rating, support_satisfaction_comment, sales_team_approach_rating, sales_team_approach_comment,
+         documentation_accuracy_rating, documentation_accuracy_comment,
+         solar_glass_expectations_rating, solar_glass_expectations_comment,
+         future_use_likelihood_rating, future_use_likelihood_comment,
          procured_other_than_borosil, procurement_reason, expectations, preferred_choice, recommendation, overall_satisfaction, suggestion)
        VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51)
        RETURNING id`,
       [
         basicInfo.customerName, basicInfo.plantLocation, basicInfo.officeLocation, basicInfo.annualCapacity, basicInfo.representativeName,
@@ -117,8 +158,14 @@ export default async function handler(req, res) {
         quality.edgeGrindingQuality.rating, quality.edgeGrindingQuality.comment,
         quality.arCoatingQuality.rating, quality.arCoatingQuality.comment,
         quality.packingLoadingQuality.rating, quality.packingLoadingQuality.comment,
+        quality.solarGlassQuality.rating, quality.solarGlassQuality.comment,
+        quality.energyGenerationPerformance.rating, quality.energyGenerationPerformance.comment,
+        quality.technicalStandardsCompliance.rating, quality.technicalStandardsCompliance.comment,
         qualityAverage, competitiveness.pricing.rating, competitiveness.pricing.comment, competitiveness.deliveryLeadTime.rating, competitiveness.deliveryLeadTime.comment,
-        competitiveness.afterSalesServiceResponse.rating, competitiveness.afterSalesServiceResponse.comment, competitiveness.salesTeamApproach.rating, competitiveness.salesTeamApproach.comment,
+        competitiveness.supportSatisfaction.rating, competitiveness.supportSatisfaction.comment, competitiveness.salesTeamApproach.rating, competitiveness.salesTeamApproach.comment,
+        competitiveness.documentationAccuracy.rating, competitiveness.documentationAccuracy.comment,
+        expectations.solarGlassExpectations.rating, expectations.solarGlassExpectations.comment,
+        expectations.futureUseLikelihood.rating, expectations.futureUseLikelihood.comment,
         others.procuredOtherThanBorosil, others.procurementReason, others.expectations, JSON.stringify(others.preferredChoice), others.recommendation, overallSatisfaction, suggestion
       ]
     );
@@ -133,10 +180,16 @@ export default async function handler(req, res) {
       { label: 'Quality: Edge Grinding', score: quality.edgeGrindingQuality.rating },
       { label: 'Quality: AR Coating', score: quality.arCoatingQuality.rating },
       { label: 'Quality: Packing', score: quality.packingLoadingQuality.rating },
+      { label: 'Quality: Solar Glass Quality', score: quality.solarGlassQuality.rating },
+      { label: 'Quality: Energy Generation Performance', score: quality.energyGenerationPerformance.rating },
+      { label: 'Quality: Technical Standards Compliance', score: quality.technicalStandardsCompliance.rating },
       { label: 'Market: Pricing', score: competitiveness.pricing.rating },
       { label: 'Market: Lead Time', score: competitiveness.deliveryLeadTime.rating },
-      { label: 'Market: After Sales Service', score: competitiveness.afterSalesServiceResponse.rating },
+      { label: 'Market: Support Satisfaction', score: competitiveness.supportSatisfaction.rating },
       { label: 'Market: Sales Team', score: competitiveness.salesTeamApproach.rating },
+      { label: 'Market: Documentation Accuracy', score: competitiveness.documentationAccuracy.rating },
+      { label: 'Expectations: Solar Glass Expectations', score: expectations.solarGlassExpectations.rating },
+      { label: 'Expectations: Future Use Likelihood', score: expectations.futureUseLikelihood.rating },
     ];
 
     const deadline = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
@@ -162,3 +215,4 @@ export default async function handler(req, res) {
     client.release();
   }
 }
+
