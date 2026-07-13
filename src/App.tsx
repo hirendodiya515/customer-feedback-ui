@@ -668,7 +668,7 @@ export default function App() {
                 </div>
 
                 <div className="border-t border-slate-100 pt-6 space-y-4">
-                  <h3 className="text-sm font-semibold text-slate-800">Product Expectations & Future Loyalty</h3>
+                  
 
                   <div id="expectations_solarGlassExpectations">
                     <RatingWithComment 
