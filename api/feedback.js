@@ -16,6 +16,8 @@ async function ensureTables(client) {
       plant_location VARCHAR(255),
       office_location VARCHAR(255),
       annual_capacity VARCHAR(255),
+      power_output_of_modules_rating INT DEFAULT 0,
+      power_output_of_modules_comment TEXT,
       contact_person VARCHAR(255) NOT NULL,
       representative_name VARCHAR(255),
       representative_mail VARCHAR(255),
@@ -93,6 +95,8 @@ async function ensureTables(client) {
     ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS solar_glass_expectations_comment TEXT;
     ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS future_use_likelihood_rating INT DEFAULT 0;
     ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS future_use_likelihood_comment TEXT;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS power_output_of_modules_rating INT DEFAULT 0;
+    ALTER TABLE customer_feedback ADD COLUMN IF NOT EXISTS power_output_of_modules_comment TEXT;
   `);
 
   await client.query(`
@@ -145,9 +149,9 @@ export default async function handler(req, res) {
          documentation_accuracy_rating, documentation_accuracy_comment,
          solar_glass_expectations_rating, solar_glass_expectations_comment,
          future_use_likelihood_rating, future_use_likelihood_comment,
-         procured_other_than_borosil, procurement_reason, expectations, preferred_choice, recommendation, overall_satisfaction, suggestion)
+         procured_other_than_borosil, procurement_reason, expectations, preferred_choice, recommendation, overall_satisfaction, suggestion, power_output_of_modules_rating, power_output_of_modules_comment)
        VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53)
        RETURNING id`,
       [
         basicInfo.customerName, basicInfo.plantLocation, basicInfo.officeLocation, basicInfo.annualCapacity, basicInfo.representativeName,
@@ -166,7 +170,8 @@ export default async function handler(req, res) {
         competitiveness.documentationAccuracy.rating, competitiveness.documentationAccuracy.comment,
         expectations.solarGlassExpectations.rating, expectations.solarGlassExpectations.comment,
         expectations.futureUseLikelihood.rating, expectations.futureUseLikelihood.comment,
-        others.procuredOtherThanBorosil, others.procurementReason, others.expectations, JSON.stringify(others.preferredChoice), others.recommendation, overallSatisfaction, suggestion
+        others.procuredOtherThanBorosil, others.procurementReason, others.expectations, JSON.stringify(others.preferredChoice), others.recommendation, overallSatisfaction, suggestion,
+        quality.powerOutputOfModules.rating, quality.powerOutputOfModules.comment
       ]
     );
 
@@ -180,6 +185,7 @@ export default async function handler(req, res) {
       { label: 'Quality: Edge Grinding', score: quality.edgeGrindingQuality.rating },
       { label: 'Quality: AR Coating', score: quality.arCoatingQuality.rating },
       { label: 'Quality: Packing', score: quality.packingLoadingQuality.rating },
+      { label: 'Quality: Power Output of Modules', score: quality.powerOutputOfModules.rating },
       { label: 'Quality: Solar Glass Quality', score: quality.solarGlassQuality.rating },
       { label: 'Quality: Energy Generation Performance', score: quality.energyGenerationPerformance.rating },
       { label: 'Quality: Technical Standards Compliance', score: quality.technicalStandardsCompliance.rating },

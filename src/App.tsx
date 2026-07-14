@@ -113,6 +113,7 @@ export default function App() {
       edgeGrindingQuality: { rating: 0, comment: '' },
       arCoatingQuality: { rating: 0, comment: '' },
       packingLoadingQuality: { rating: 0, comment: '' },
+      powerOutputOfModules: { rating: 0, comment: '' },
       solarGlassQuality: { rating: 0, comment: '' },
       energyGenerationPerformance: { rating: 0, comment: '' },
       technicalStandardsCompliance: { rating: 0, comment: '' },
@@ -218,7 +219,7 @@ export default function App() {
       newErrors.representativeMail = 'Valid email required';
     }
     if (!formData.basicInfo.representativeDesignation.trim()) newErrors.representativeDesignation = 'Required';
-    if (!formData.basicInfo.brlRepresentativeName.trim()) newErrors.brlRepresentativeName = 'Required';
+    // if (!formData.basicInfo.brlRepresentativeName.trim()) newErrors.brlRepresentativeName = 'Required';
 
     // Quality Ratings Validation
     Object.entries(formData.quality).forEach(([key, value]) => {
@@ -405,7 +406,7 @@ export default function App() {
                       required
                       name="annualCapacity"
                       className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.annualCapacity ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
-                      placeholder="e.g. 100MW"
+                      placeholder="e.g. 500MW, 1GW"
                       value={formData.basicInfo.annualCapacity}
                       onChange={(e) => updateBasicInfo('annualCapacity', e.target.value)}
                     />
@@ -454,12 +455,13 @@ export default function App() {
                     />
                   </div>
                 </div>
+                {/*
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700 ml-1">BRL Representative Name *</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input 
-                      required
+                      
                       name="brlRepresentativeName"
                       className={`w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border ${errors.brlRepresentativeName ? 'border-red-400 bg-red-50' : 'border-slate-200'} rounded focus:ring-1 focus:ring-blue-500 outline-none transition-all`}
                       placeholder="Enter the name of BRL representative"
@@ -468,6 +470,7 @@ export default function App() {
                     />
                   </div>
                 </div>
+                */}
               </div>
             </section>
 
@@ -535,19 +538,19 @@ export default function App() {
                     onCommentChange={(v) => updateQuality('packingLoadingQuality', 'comment', v)}
                   />
                 </div>
-                <div id="quality_solarGlassQuality">
+                <div id="quality_powerOutputOfModules">
                   <RatingWithComment 
-                    label="How would you rate the quality of the solar glass?"
-                    value={formData.quality.solarGlassQuality.rating}
-                    comment={formData.quality.solarGlassQuality.comment}
-                    error={errors.quality_solarGlassQuality}
-                    onRatingChange={(v) => updateQuality('solarGlassQuality', 'rating', v)}
-                    onCommentChange={(v) => updateQuality('solarGlassQuality', 'comment', v)}
+                    label="Power output of the modules using this product"
+                    value={formData.quality.powerOutputOfModules.rating}
+                    comment={formData.quality.powerOutputOfModules.comment}
+                    error={errors.quality_powerOutputOfModules}
+                    onRatingChange={(v) => updateQuality('powerOutputOfModules', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('powerOutputOfModules', 'comment', v)}
                   />
                 </div>
                 <div id="quality_energyGenerationPerformance">
                   <RatingWithComment 
-                    label="How satisfied are you with the energy generation performance of our product?"
+                    label="How satisfied are you with the energy generation performance of the product?"
                     value={formData.quality.energyGenerationPerformance.rating}
                     comment={formData.quality.energyGenerationPerformance.comment}
                     error={errors.quality_energyGenerationPerformance}
@@ -563,6 +566,16 @@ export default function App() {
                     error={errors.quality_technicalStandardsCompliance}
                     onRatingChange={(v) => updateQuality('technicalStandardsCompliance', 'rating', v)}
                     onCommentChange={(v) => updateQuality('technicalStandardsCompliance', 'comment', v)}
+                  />
+                </div>
+                <div id="quality_solarGlassQuality">
+                  <RatingWithComment 
+                    label="How would you rate the quality of the solar glass?"
+                    value={formData.quality.solarGlassQuality.rating}
+                    comment={formData.quality.solarGlassQuality.comment}
+                    error={errors.quality_solarGlassQuality}
+                    onRatingChange={(v) => updateQuality('solarGlassQuality', 'rating', v)}
+                    onCommentChange={(v) => updateQuality('solarGlassQuality', 'comment', v)}
                   />
                 </div>
                 <div className="mt-6 p-4 bg-blue-50 rounded border border-blue-100 flex items-center justify-between">
